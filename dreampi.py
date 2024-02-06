@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#dreampi.py_version=202402061629
+#dreampi.py_version=202307212004
 # from __future__ import absolute_import
 # from __future__ import print_function
 import atexit
@@ -900,7 +900,6 @@ def process():
                     modem.connect()
                     mode = "LISTENING"
                     modem.start_dial_tone()
-
         elif mode == "CONNECTED":
             dcnow.go_online(dreamcast_ip)
             
@@ -914,7 +913,6 @@ def process():
             modem.connect()
             if dial_tone_enabled:
                 modem.start_dial_tone()
-
         elif mode == "NETLINK_CONNECTED":
             if client == "xband":
                 xband.netlink_exchange("calling","connected",oppIP,ser=modem._serial)
