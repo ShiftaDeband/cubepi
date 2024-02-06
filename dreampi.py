@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#dreampi.py_version=202307212004
+#dreampi.py_version=202402061629
 # from __future__ import absolute_import
 # from __future__ import print_function
 import atexit
@@ -261,9 +261,9 @@ def autoconfigure_ppp(device, speed):
 
     PEERS_TEMPLATE = "{device}\n" "{device_speed}\n" "{this_ip}:{dc_ip}\n" "noauth\n"
 
-    GC_PEERS_TEMPLATE = "{device}\n" "{device_speed}\n" "{this_ip}:{dc_ip}\n" "auth\n" "login\n" "require-pap\n"
+    OPTIONS_TEMPLATE = "debug\n" "ms-dns {this_ip}\n" "proxyarp\n" "ktune\n" "noccp\n"
 
-    OPTIONS_TEMPLATE = "debug\n" "proxyarp\n" "ktune\n" "noccp\n" "ms-dns {this_ip}\n"
+    GC_PEERS_TEMPLATE = "{device}\n" "{device_speed}\n" "{this_ip}:{dc_ip}\n" "auth\n" "login\n" "require-pap\n"
 
     this_ip = find_next_unused_ip(".".join(subnet) + ".100")
     dreamcast_ip = find_next_unused_ip(this_ip)
@@ -298,7 +298,7 @@ ENABLE_SPEED_DETECTION = (
 
 
 def detect_device_and_speed():
-    MAX_SPEED = 57600
+    MAX_SPEED = 115200
 
     if not ENABLE_SPEED_DETECTION:
         # By default we don't detect the speed or device as it's flakey in later
@@ -450,16 +450,16 @@ class Modem(object):
             self._device, self._speed, timeout=0
         )
         return self._serial
-    
-    def connect_netlink(self,speed = 115200, timeout = 0.01, rtscts = False): #non-blocking
+
+    def connect_gamecube(self):
         if self._serial:
             self.disconnect()
         logger.info("Opening serial interface to {}".format(self._device))
         self._serial = serial.Serial(
-            self._device, speed, timeout=timeout, rtscts = rtscts
+            self._device, self._speed, timeout=0
         )
-
-    def connect_gamecube(self,speed = 115200, timeout = 0.01, rtscts = False): #non-blocking
+    
+    def connect_netlink(self,speed = 115200, timeout = 0.01, rtscts = False): #non-blocking
         if self._serial:
             self.disconnect()
         logger.info("Opening serial interface to {}".format(self._device))
@@ -901,13 +901,14 @@ def process():
                     mode = "LISTENING"
                     modem.start_dial_tone()
 
-        elif mode == "GAMECUBE CONNECTED":
-            # modem.query_modem(b"ATA", timeout=120, response = "CONNECT")
+        elif mode == "CONNECTED":
+            dcnow.go_online(dreamcast_ip)
+            
             for line in sh.tail("-f", "/var/log/messages", "-n", "1", _iter=True):
                 if "pppd" in line and "Exit" in line:#wait for pppd to execute the ip-down script
                     logger.info("Detected modem hang up, going back to listening")
                     break
-            logger.info("GameCube Disconnected")
+            dcnow.go_offline() #changed dcnow to wait 15 seconds for event instead of sleeping. Should be faster.
             mode = "LISTENING"
             # modem = Modem(device_and_speed[0], device_and_speed[1], dial_tone_enabled)
             modem.connect()
@@ -923,20 +924,19 @@ def process():
             mode = "LISTENING"
             modem.connect()
             modem.start_dial_tone()
-
-        elif mode == "CONNECTED":
-            dcnow.go_online(dreamcast_ip)
             
+        elif mode == "GAMECUBE CONNECTED":
+            # modem.query_modem(b"ATA", timeout=120, response = "CONNECT")
             for line in sh.tail("-f", "/var/log/messages", "-n", "1", _iter=True):
                 if "pppd" in line and "Exit" in line:#wait for pppd to execute the ip-down script
                     logger.info("Detected modem hang up, going back to listening")
                     break
-            dcnow.go_offline() #changed dcnow to wait 15 seconds for event instead of sleeping. Should be faster.
             mode = "LISTENING"
             # modem = Modem(device_and_speed[0], device_and_speed[1], dial_tone_enabled)
             modem.connect()
             if dial_tone_enabled:
                 modem.start_dial_tone()
+
     if port_forwarding is not None:
         port_forwarding.delete_all()
     return 0
