@@ -288,6 +288,15 @@ def autoconfigure_ppp(device, speed):
 
     with open("/etc/ppp/options", "w") as f:
         f.write(options_content)
+    
+    pap_user = "gc * gc *";
+
+    with open("/etc/ppp/pap-secrets", "r+") as f:
+        for line in f:
+            if pap_user in line:
+                break
+        else:
+            f.write(pap_user)
 
     return dreamcast_ip
 
