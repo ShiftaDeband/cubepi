@@ -261,7 +261,9 @@ def autoconfigure_ppp(device, speed):
 
     PEERS_TEMPLATE = "{device}\n" "{device_speed}\n" "{this_ip}:{dc_ip}\n" "noauth\n"
 
-    OPTIONS_TEMPLATE = "debug\n" "ms-dns {this_ip}\n" "proxyarp\n" "ktune\n" "noccp\n"
+    GC_PEERS_TEMPLATE = "{device}\n" "{device_speed}\n" "{this_ip}:{dc_ip}\n" "auth\n" "login\n" "require-pap\n"
+
+    OPTIONS_TEMPLATE = "debug\n" "proxyarp\n" "ktune\n" "noccp\n" "ms-dns {this_ip}\n"
 
     this_ip = find_next_unused_ip(".".join(subnet) + ".100")
     dreamcast_ip = find_next_unused_ip(this_ip)
@@ -274,6 +276,13 @@ def autoconfigure_ppp(device, speed):
 
     with open("/etc/ppp/peers/dreamcast", "w") as f:
         f.write(peers_content)
+
+    gc_peers_content = GC_PEERS_TEMPLATE.format(
+        device=device, device_speed=speed, this_ip=this_ip, dc_ip=dreamcast_ip
+    )
+
+    with open("/etc/ppp/peers/gamecube", "w") as f:
+        f.write(gc_peers_content)
 
     options_content = OPTIONS_TEMPLATE.format(this_ip=this_ip)
 
@@ -289,7 +298,7 @@ ENABLE_SPEED_DETECTION = (
 
 
 def detect_device_and_speed():
-    MAX_SPEED = 115200
+    MAX_SPEED = 57600
 
     if not ENABLE_SPEED_DETECTION:
         # By default we don't detect the speed or device as it's flakey in later
@@ -450,6 +459,14 @@ class Modem(object):
             self._device, speed, timeout=timeout, rtscts = rtscts
         )
 
+    def connect_gamecube(self,speed = 115200, timeout = 0.01, rtscts = False): #non-blocking
+        if self._serial:
+            self.disconnect()
+        logger.info("Opening serial interface to {}".format(self._device))
+        self._serial = serial.Serial(
+            self._device, speed, timeout=timeout, rtscts = rtscts
+        )
+
     def disconnect(self):
         if self._serial and self._serial.isOpen():
             self._serial.flush()
@@ -513,6 +530,16 @@ class Modem(object):
         logger.info("Call answered!")
         logger.info(subprocess.check_output(["pon", "dreamcast"]).decode())
         logger.info("Connected")
+
+    def gamecube_answer(self):
+        self.reset()
+        # When we send ATA we only want to look for CONNECT. Some modems respond OK then CONNECT
+        # and that messes everything up
+        self.send_command(b"ATA", ignore_responses=[b"OK"])
+        # time.sleep(5)
+        logger.info("Call answered!")
+        logger.info(subprocess.check_output(["pon", "gamecube"]).decode())
+        logger.info("GameCube connected!")
 
     def netlink_answer(self):
         self.reset()
@@ -771,7 +798,10 @@ def process():
                             logger.info("Calling Xband server")
                             client = "xband"
                             mode = "XBAND ANSWERING"
-
+                        elif dial_string == "2001":
+                            logger.info("GameCube attempting to connect")
+                            client = "gamecube"
+                            mode = "GAMECUBE ANSWERING"
                         elif dial_string == "00":
                             side = "waiting"
                             client = "direct_dial"
@@ -805,6 +835,8 @@ def process():
                             mode = "NETLINK ANSWERING"
                         elif client == "xband":
                             pass
+                        elif client == "gamecube":
+                            mode = "GAMECUBE ANSWERING"
                         else:
                             mode = "ANSWERING"
                         modem.stop_dial_tone()
@@ -823,6 +855,15 @@ def process():
                 modem.start_dial_tone()
                 xbandMatching = True
                 xbandTimer = time.time()
+
+        elif mode == "GAMECUBE ANSWERING":
+            if time_digit_heard is None:
+                raise Exception("Impossible code path")
+            if (now - time_digit_heard).total_seconds() > 8.0:
+                time_digit_heard = None
+                modem.gamecube_answer()
+                modem.disconnect()
+                mode = "GAMECUBE CONNECTED"
 
         elif mode == "ANSWERING":
             if time_digit_heard is None:
@@ -859,6 +900,30 @@ def process():
                     modem.connect()
                     mode = "LISTENING"
                     modem.start_dial_tone()
+
+        elif mode == "GAMECUBE CONNECTED":
+            # modem.query_modem(b"ATA", timeout=120, response = "CONNECT")
+            for line in sh.tail("-f", "/var/log/messages", "-n", "1", _iter=True):
+                if "pppd" in line and "Exit" in line:#wait for pppd to execute the ip-down script
+                    logger.info("Detected modem hang up, going back to listening")
+                    break
+            logger.info("GameCube Disconnected")
+            mode = "LISTENING"
+            # modem = Modem(device_and_speed[0], device_and_speed[1], dial_tone_enabled)
+            modem.connect()
+            if dial_tone_enabled:
+                modem.start_dial_tone()
+
+        elif mode == "NETLINK_CONNECTED":
+            if client == "xband":
+                xband.netlink_exchange("calling","connected",oppIP,ser=modem._serial)
+            else:
+                do_netlink(side,dial_string,modem,saturn=saturn)
+            logger.info("Netlink Disconnected")
+            mode = "LISTENING"
+            modem.connect()
+            modem.start_dial_tone()
+
         elif mode == "CONNECTED":
             dcnow.go_online(dreamcast_ip)
             
@@ -872,15 +937,6 @@ def process():
             modem.connect()
             if dial_tone_enabled:
                 modem.start_dial_tone()
-        elif mode == "NETLINK_CONNECTED":
-            if client == "xband":
-                xband.netlink_exchange("calling","connected",oppIP,ser=modem._serial)
-            else:
-                do_netlink(side,dial_string,modem,saturn=saturn)
-            logger.info("Netlink Disconnected")
-            mode = "LISTENING"
-            modem.connect()
-            modem.start_dial_tone()
     if port_forwarding is not None:
         port_forwarding.delete_all()
     return 0
