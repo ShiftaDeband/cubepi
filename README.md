@@ -1,5 +1,3 @@
-(rewrite in progress as of Feb. 6, 2024, this project is incomplete!)
-
 # cubepi
 
 Use your GameCube's dial-up modem adapter to connect _Phantasy Star Online Episode I&II_ and _Phantasy Star Online Episode III: C.A.R.D. Revolution_ to the internet -- all while keeping the original [dreampi](https://github.com/Kazade/dreampi)/Dreamcast functionality working.
