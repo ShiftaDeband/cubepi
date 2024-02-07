@@ -16,13 +16,19 @@ This applies to any version of PSO available on the GameCube regardless of regio
 5. Using 'Provider 1', press 'A' on the 'Edit Menu' button, the right-most button at the top of the page.
 6. Press the same button as before to skip this step unless you'd like to rename the ISP name.
 7. On this page, make sure the first bullet is selected (tone) and that the bottom-most/last option, Line timout, is set to '99'. Hit 'Next', the right-most button at the top of the page.
-8. Set `gc` for your 'User ID', the first field, and `gc` for the 'Password', the second field. Finally, set the 'Phone number 1' field, the third field, to '2001'.  Hit 'Next', the right-most button at the top of the page.
-9. Make sure 'DNS server address' is set to 'Automatic', then hit 'Next', the right-most button at the top of the page. (You can keep it to a custom DNS server here if you'd like, or you can also set this using the utility above with `sudo ./dreampi-add.sh -s '[customIP]'`, where [customIP] is the IP address of the server you'd like to connect to. The PSO server defaults to [Sylverant](https://sylverant.net/).)
-10. You can leave proxy server address as is and click 'next', the right-most button at the top of the page.
-11. Hit 'Save' by pressing 'A' over the right-most button at the top of the page.
-12. Now hit 'Exit', the furthest left button at the top of the page.
-13. Return to the game by pressing 'Y' and clicking the farthest right option, the 'X' in the utility and by clicking 'Yes', the left option in the confirmation dialogue.
-14. When back at the title screen, press 'Online Mode' or the top-most option and enjoy!
+8. On this page, set the following and then hit next:
+    * User ID: `gc`
+    * Password: `gc`
+    * Phone Number: `2001` 
+10. On this page, set your DNS to manual and point it at a server of your choice, then hit next.
+    * [Sylverant](https://sylverant.net): 138.197.20.130
+    * [Schthack](https://schtserv.com/forums/app.php/welcome): 3.18.217.27
+    * ...or host your own local server using [newserv](https://github.com/fuzziqersoftware/newserv).
+12. You can leave proxy server address as is and click 'next', the right-most button at the top of the page.
+13. Hit 'Save' by pressing 'A' over the right-most button at the top of the page.
+14. Now hit 'Exit', the furthest left button at the top of the page.
+15. Return to the game by pressing 'Y' and clicking the farthest right option, the 'X' in the utility and by clicking 'Yes', the left option in the confirmation dialogue.
+16. When back at the title screen, press 'Online Mode' or the top-most option and enjoy!
 
 ## Other Methods
 If you are simply trying to get online to play _Phantasy Star Online Episode I&II_ or _Phantasy Star Online Episode III: C.A.R.D Revolution_, there are other methods that may be easier to accomplish:
