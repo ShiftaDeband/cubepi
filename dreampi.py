@@ -459,14 +459,6 @@ class Modem(object):
             self._device, self._speed, timeout=0
         )
         return self._serial
-
-    def connect_gamecube(self):
-        if self._serial:
-            self.disconnect()
-        logger.info("Opening serial interface to {}".format(self._device))
-        self._serial = serial.Serial(
-            self._device, self._speed, timeout=0
-        )
     
     def connect_netlink(self,speed = 115200, timeout = 0.01, rtscts = False): #non-blocking
         if self._serial:
@@ -545,7 +537,6 @@ class Modem(object):
         # When we send ATA we only want to look for CONNECT. Some modems respond OK then CONNECT
         # and that messes everything up
         self.send_command(b"ATA", ignore_responses=[b"OK"])
-        # time.sleep(5)
         logger.info("Call answered!")
         logger.info(subprocess.check_output(["pon", "gamecube"]).decode())
         logger.info("GameCube connected!")
@@ -931,13 +922,11 @@ def process():
             modem.start_dial_tone()
             
         elif mode == "GAMECUBE CONNECTED":
-            # modem.query_modem(b"ATA", timeout=120, response = "CONNECT")
             for line in sh.tail("-f", "/var/log/messages", "-n", "1", _iter=True):
                 if "pppd" in line and "Exit" in line:#wait for pppd to execute the ip-down script
                     logger.info("Detected modem hang up, going back to listening")
                     break
             mode = "LISTENING"
-            # modem = Modem(device_and_speed[0], device_and_speed[1], dial_tone_enabled)
             modem.connect()
             if dial_tone_enabled:
                 modem.start_dial_tone()
