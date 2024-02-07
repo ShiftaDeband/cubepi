@@ -63,7 +63,7 @@ def updater():
                 if local_script == "dreampi.py":
                     os.system("sudo chmod +x dreampi.py")
                 restartFlag = True
-
+            
         except requests.exceptions.HTTPError:
             logger.info("Couldn't check updates for: %s" % local_script)
             continue
@@ -289,14 +289,14 @@ def autoconfigure_ppp(device, speed):
     with open("/etc/ppp/options", "w") as f:
         f.write(options_content)
 
-    pap_user = "gc      *       gc      *";
+    gc_pap_user = "gc      *       gc      *";
 
     with open("/etc/ppp/pap-secrets", "r+") as f:
         for line in f:
-            if pap_user in line:
+            if gc_pap_user in line:
                 break
         else:
-            f.write(pap_user)
+            f.write(gc_pap_user)
 
     return dreamcast_ip
 
@@ -842,10 +842,8 @@ def process():
                        
                         if client == "direct_dial":
                             mode = "NETLINK ANSWERING"
-                        elif client == "xband":
+                        elif client == "xband" or client == "gamecube":
                             pass
-                        elif client == "gamecube":
-                            mode = "GAMECUBE ANSWERING"
                         else:
                             mode = "ANSWERING"
                         modem.stop_dial_tone()
