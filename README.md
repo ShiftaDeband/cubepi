@@ -5,7 +5,7 @@ Use your GameCube's dial-up modem adapter to connect _Phantasy Star Online Episo
 Based off the incredible work of [Kazade](https://github.com/Kazade)'s [dreampi](https://github.com/Kazade/dreampi).
 
 ## Setting up PSO
-This applies to any version of PSO available on the GameCube regardless of region. You can also [view the YouTube video showing which values should be set where](https://youtu.be/lhcQLNbucWc?t=40).
+This applies to any version of PSO available on the GameCube regardless of region. You can also [view this YouTube video showing which values should be set where](https://youtu.be/Z9dcrpzPRrg).
 
 1. Boot up the game and get to the start menu.
 2. Press Start, then put the cursor over the 'Website' option, the last item on the start screen list.
