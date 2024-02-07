@@ -63,7 +63,7 @@ def updater():
                 if local_script == "dreampi.py":
                     os.system("sudo chmod +x dreampi.py")
                 restartFlag = True
-            
+
         except requests.exceptions.HTTPError:
             logger.info("Couldn't check updates for: %s" % local_script)
             continue
@@ -263,7 +263,7 @@ def autoconfigure_ppp(device, speed):
 
     OPTIONS_TEMPLATE = "debug\n" "ms-dns {this_ip}\n" "proxyarp\n" "ktune\n" "noccp\n"
 
-    GC_PEERS_TEMPLATE = "{device}\n" "{device_speed}\n" "{this_ip}:{dc_ip}\n" "auth\n" "login\n" "require-pap\n"
+    GC_PEERS_TEMPLATE = "{device}\n" "{device_speed}\n" "{this_ip}:{dc_ip}\n" "auth\n" "require-pap\n"
 
     this_ip = find_next_unused_ip(".".join(subnet) + ".100")
     dreamcast_ip = find_next_unused_ip(this_ip)
@@ -288,8 +288,8 @@ def autoconfigure_ppp(device, speed):
 
     with open("/etc/ppp/options", "w") as f:
         f.write(options_content)
-    
-    pap_user = "gc * gc *";
+
+    pap_user = "gc      *       gc      *";
 
     with open("/etc/ppp/pap-secrets", "r+") as f:
         for line in f:
